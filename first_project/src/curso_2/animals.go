@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
 )
 
 type Animal struct {
@@ -32,9 +36,18 @@ func (animal Animal) Speak() {
 	fmt.Println(animal.noise)
 }
 
-// func a() string {
-// 	return "hola"
-// }
+func splitter(str string) []string {
+	numbers := strings.Fields(str)
+	return numbers
+}
+
+func clean_input(input string) string {
+	re_leadclose_whtsp := regexp.MustCompile(`^[\s\p{Zs}]+|[\s\p{Zs}]+$`)
+	re_inside_whtsp := regexp.MustCompile(`[\s\p{Zs}]{2,}`)
+	result := re_leadclose_whtsp.ReplaceAllString(input, "")
+	result = re_inside_whtsp.ReplaceAllString(result, " ")
+	return result
+}
 
 func main() {
 	cow := Cow{
@@ -61,45 +74,50 @@ func main() {
 		},
 	}
 
-	fmt.Println(cow)
-	fmt.Println(bird)
-	fmt.Println(snake)
+	dict_of_animals := map[string]Animal{
+		"cow":   cow.Animal,
+		"bird":  bird.Animal,
+		"snake": snake.Animal,
+	}
 
-	fmt.Println(cow.Animal)
-	fmt.Println(bird.Animal)
-	fmt.Println(snake.Animal)
+	for {
+		fmt.Println("Please introduce request > ")
+		in := bufio.NewReader(os.Stdin)
+		input_string, _ := in.ReadString('\n')
 
-	fmt.Println(cow.Animal.food)
-	fmt.Println(bird.Animal)
-	fmt.Println(snake.Animal)
+		splitted_string := splitter(input_string)
 
-	// dict_of_animals := map[string]func()string{
-	// 	"cow":   a,
-	// }
+		if len(splitted_string) == 1 {
+			fmt.Printf("Only partial information provided: %s\n", input_string)
+			fmt.Println("Please, provide name of animal and an action (eat, move or speak)")
+			continue
+		}
 
-	// fmt.Println("Please introduce value of animal: ")
-	// in := bufio.NewReader(os.Stdin)
-	// animal, _ := in.ReadString('\n')
+		animal := splitted_string[0]
+		action := splitted_string[1]
 
-	// switch animal, action {
-	// case "cow", "eat":
-	// 	cow.Eat()
-	// case "cow", "move":
-	// 	cow.
-	// case "cow", "speak":
+		if len(splitted_string) > 2 {
+			fmt.Println("Introduced request is longer than 2 words")
+			fmt.Printf("only %s and %s are going to be used\n", animal, action)
+		}
 
-	// case "bird", "eat":
-	// case "bird", "move":
-	// case "bird", "speak":
+		animal = clean_input(animal)
+		action = clean_input(action)
 
-	// case "snake", "eat":
-	// case "snake", "move":
-	// case "snake", "speak":
+		selected_animal, ok := dict_of_animals[animal]
 
-	// }
-	// selected_animal := dict_of_animals[str]
-	// fmt.Println("Selected animal: ")
-	// selected_animal.Eat()
-	// selected_animal.Move()
-	// selected_animal.Speak()
+		if !ok {
+			fmt.Printf("Selected animal %s is not one of cow, bird or snake. Try it again\n", animal)
+			continue
+		}
+
+		switch action {
+		case "eat":
+			selected_animal.Eat()
+		case "move":
+			selected_animal.Move()
+		case "speak":
+			selected_animal.Speak()
+		}
+	}
 }
